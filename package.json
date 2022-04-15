@@ -1,0 +1,38 @@
+{
+  "name": "processing-fuel-prices",
+  "version": "0.0.0",
+  "description": "Inject gasoline price in France into data-fair datasets",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "lint": "eslint --ignore-path .gitignore .",
+    "lint-fix": "eslint --ignore-path .gitignore --fix .",
+    "start": "node src/process.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WiPhil/processing-fuel-prices.git"
+  },
+  "keywords": [
+    "data-fair-processings-plugin"
+  ],
+  "author": "Philippe Laidin, Benjamin Giraud-renard",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WiPhil/processing-fuel-prices/issues"
+  },
+  "homepage": "https://github.com/WiPhil/processing-fuel-prices#readme",
+  "devDependencies": {
+    "axios": "^0.21.4",
+    "config": "^3.3.6",
+    "mocha": "^8.2.1",
+    "standard": "^16.0.3"
+  },
+  "dependencies": {
+    "form-data": "^4.0.0",
+    "fs-extra": "^10.0.1",
+    "iconv-lite": "^0.6.3",
+    "moment": "^2.29.2",
+    "xml2js": "^0.4.23"
+  }
+}
