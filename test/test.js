@@ -33,7 +33,7 @@ describe('Station service processing', () => {
       return Promise.reject(error.response)
     })
 
-    const pluginConfig = { pluginMessage: 'Hello' }
+    const pluginConfig = { url: 'https://donnees.roulez-eco.fr/opendata/instantane' }
 
     const processingConfig = {
       clearFiles: false,
