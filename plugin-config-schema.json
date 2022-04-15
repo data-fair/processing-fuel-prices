@@ -1,4 +1,10 @@
 {
   "type": "object",
-  "properties": {}
+  "properties": {
+    "url":{
+      "type": "string",
+      "title": "Url d'accès aux données sources",
+      "default": "https://donnees.roulez-eco.fr/opendata/instantane"
+    }
+  }
 }
