@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/WiPhil/processing-fuel-prices#readme",
   "devDependencies": {
-    
     "mocha": "^8.2.1",
     "standard": "^16.0.3"
   },
