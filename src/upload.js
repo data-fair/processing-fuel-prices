@@ -24,8 +24,8 @@ module.exports = async (processingConfig, tmpDir, axios, log, patchConfig) => {
     await log.step('Création du jeu de données')
   }
 
-  const filePath = path.join(tmpDir, 'carburant.csv')
-  formData.append('dataset', fs.createReadStream(filePath), { filename: 'test_carburant.csv' })
+  const filePath = path.join(tmpDir, 'carburants.csv')
+  formData.append('dataset', fs.createReadStream(filePath), { filename: 'carburants.csv' })
   formData.getLength = util.promisify(formData.getLength)
   const contentLength = await formData.getLength()
   await log.info(`chargement de ${displayBytes(contentLength)}`)

@@ -7,8 +7,8 @@ const datasetSchema = require('./schema.json')
 const iconv = require('iconv-lite')
 
 module.exports = async (tmpDir, log) => {
-  await log.step('Traitement des fichiers')
-  const outFile = await fs.promises.open(path.join(tmpDir, 'carburant.csv'), 'w')
+  await log.step('Traitement du fichier')
+  const outFile = await fs.promises.open(path.join(tmpDir, 'carburants.csv'), 'w')
   await outFile.write(datasetSchema.map(f => `"${f.key}"`).join(',') + endOfLine)
 
   // Change the encoding to UTF-8
@@ -40,54 +40,77 @@ module.exports = async (tmpDir, log) => {
             // Recovery of timetable of station
             if (station.horaires !== undefined) {
               base.automate = station.horaires[0].ATTR['automate-24-24'] === '' ? '0' : '1'
-              const infoJour = []
+              let infoJour = []
               for (const jour of station.horaires[0].jour) {
                 // Format the opening hours to https://schema.org/openingHours
-                let nomJour = ''
-                switch (jour.ATTR.nom) {
-                  case 'Lundi':
-                    nomJour = 'Mo'
-                    break
-                  case 'Mardi':
-                    nomJour = 'Tu'
-                    break
-                  case 'Mercredi':
-                    nomJour = 'We'
-                    break
-                  case 'Jeudi':
-                    nomJour = 'Th'
-                    break
-                  case 'Vendredi':
-                    nomJour = 'Fr'
-                    break
-                  case 'Samedi':
-                    nomJour = 'Sa'
-                    break
-                  case 'Dimanche':
-                    nomJour = 'Su'
-                    break
-                }
-                let ouvertures = nomJour + ' '
+                if (jour.ATTR.ferme !== '1' || base.automate) {
+                  let nomJour = ''
+                  switch (jour.ATTR.nom) {
+                    case 'Lundi':
+                      nomJour = 'Mo'
+                      break
+                    case 'Mardi':
+                      nomJour = 'Tu'
+                      break
+                    case 'Mercredi':
+                      nomJour = 'We'
+                      break
+                    case 'Jeudi':
+                      nomJour = 'Th'
+                      break
+                    case 'Vendredi':
+                      nomJour = 'Fr'
+                      break
+                    case 'Samedi':
+                      nomJour = 'Sa'
+                      break
+                    case 'Dimanche':
+                      nomJour = 'Su'
+                      break
+                  }
 
-                if (jour.horaire !== undefined) {
-                  ouvertures += jour.horaire[0].ATTR.ouverture.replace(/\./, ':') + '-'
-                  ouvertures += jour.horaire[0].ATTR.fermeture.replace(/\./, ':')
-                  infoJour.push(ouvertures)
-                }
-                base.horaire = infoJour.join(';')
+                  if (jour.horaire !== undefined) {
+                    const open = jour.horaire[0].ATTR.ouverture.replace(/\./, ':')
+                    const close = jour.horaire[0].ATTR.fermeture.replace(/\./, ':')
+                    const hour = open + '-' + close
+                    let ouvertures
+                    if (infoJour.length > 0) {
+                      const arrayJour = infoJour[infoJour.length - 1].split(' ')
+                      if (infoJour[infoJour.length - 1] === '') infoJour[infoJour.length - 1] = nomJour
+                      if ((open === '00:00' && (close.split(':')[0] === '23' && parseInt(close.split(':')[1]) > 50)) || (open === close)) {
+                        if (arrayJour[1] === hour || arrayJour.length <= 1) {
+                          nomJour = arrayJour[0].split('-')[0] + '-' + nomJour
+                          infoJour.splice(infoJour.length - 1)
+                          ouvertures = nomJour
+                        } else {
+                          ouvertures = nomJour
+                        }
+                      } else if (arrayJour[1] === hour) {
+                        nomJour = arrayJour[0].split('-')[0] + '-' + nomJour
+                        infoJour.splice(infoJour.length - 1)
+                        ouvertures = nomJour + ' ' + hour
+                      } else {
+                        ouvertures = nomJour + ' ' + hour
+                      }
+                    } else {
+                      ouvertures = nomJour + ' ' + hour
+                    }
+                    infoJour.push(ouvertures)
+                  }
+                } else infoJour.push('')
               }
+              infoJour = infoJour.filter(elem => ![''].includes(elem))
+              base.horaire = '"' + infoJour.join(',') + '"'
             } else {
               base.horaire = ''
             }
 
             // Add the list of services available in the station
-            if (station.services[0].service !== undefined) {
-              base.services = '"' + station.services[0].service.join(';') + '"'
-            } else {
-              base.services = station.services[0]
-            }
+            if (station.services[0].service !== undefined) base.services = '"' + station.services[0].service.join(',') + '"'
+            else if (station.services[0].trim().length === 0) base.services = ''
+            else base.services = station.services[0].trim()
 
-            base.type_carburant = carburant.ATTR.nom
+            base.type_carburant = carburant.ATTR.nom.trim()
             base.prix_carburant = parseFloat(carburant.ATTR.valeur)
             // Convert the date to ISO 8601 format
             const date = new Date(carburant.ATTR.maj).toISOString()
