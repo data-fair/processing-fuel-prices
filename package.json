@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/processing-fuel-prices",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Inject gasoline price in France into data-fair datasets",
   "main": "index.js",
   "scripts": {
