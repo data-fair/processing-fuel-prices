@@ -1,4 +1,4 @@
-process.env.NODE_ENV = 'test'
+process.env.NODE_ENV = 'local-dev'
 const fs = require('fs-extra')
 const config = require('config')
 const axios = require('axios')
@@ -16,7 +16,6 @@ describe('Station service processing', () => {
 
   it('should run a task', async function () {
     this.timeout(3600000)
-
     const headers = { 'x-apiKey': config.dataFairAPIKey }
     const axiosInstance = axios.create({
       baseURL: config.dataFairUrl,
@@ -39,8 +38,10 @@ describe('Station service processing', () => {
       clearFiles: false,
       skipUpload: false,
       datasetIdPrefix: 'gasoline',
+      datasetMode: 'create',
       dataset: {
-        title: 'gasoline - test'
+        title: 'fuel station test titre',
+        id: 'fuel-station-test-id'
       }
     }
 
@@ -62,7 +63,7 @@ describe('Station service processing', () => {
     await fs.ensureDir('data/')
     process.chdir('data/')
     console.log(process.cwd())
-    await processing.run({ pluginConfig, processingConfig, tmpDir: path.resolve('./'), axios, log, patchConfig })
+    await processing.run({ pluginConfig, processingConfig, tmpDir: path.resolve('./'), axios: axiosInstance, log, patchConfig })
     process.chdir(cwd)
   })
 })

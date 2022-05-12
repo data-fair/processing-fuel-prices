@@ -1,16 +1,14 @@
 const xml2js = require('xml2js')
 const parser = new xml2js.Parser({ attrkey: 'ATTR' })
 const fs = require('fs')
-const path = require('path')
-const endOfLine = require('os').EOL
-const datasetSchema = require('./schema.json')
+// const path = require('path')
+// const endOfLine = require('os').EOL
+// const datasetSchema = require('./schema.json')
 const iconv = require('iconv-lite')
 
 module.exports = async (tmpDir, log) => {
   await log.step('Traitement du fichier')
-  const outFile = await fs.promises.open(path.join(tmpDir, 'carburants.csv'), 'w')
-  await outFile.write(datasetSchema.map(f => `"${f.key}"`).join(',') + endOfLine)
-
+  const tab = []
   // Change the encoding to UTF-8
   const xmlString = iconv.decode(fs.readFileSync('PrixCarburants_instantane.xml'), 'iso-8859-1')
   // Put in string all the xml file contents
@@ -26,14 +24,14 @@ module.exports = async (tmpDir, log) => {
             // Base = line for the future csv file
             const base = {
               id: station.ATTR.id,
-              latitude: (parseFloat(station.ATTR.latitude) / 100000).toFixed(6),
-              longitude: (parseFloat(station.ATTR.longitude) / 100000).toFixed(6),
+              latitude: parseFloat((parseFloat(station.ATTR.latitude) / 100000).toFixed(6)),
+              longitude: parseFloat((parseFloat(station.ATTR.longitude) / 100000).toFixed(6)),
               cp: station.ATTR.cp, // CP = postcode
               code_DEP: station.ATTR.cp.substr(0, 2),
               type_de_route: station.ATTR.pop,
 
-              adresse: '"' + station.adresse[0].replace(/"/g, '') + '"',
-              ville: '"' + station.ville[0].replace(/"/g, '').toUpperCase().replace(/[0-9]+/g, '').trim() + '"',
+              adresse: station.adresse[0].replace(/"/g, ''),
+              ville: station.ville[0].replace(/"/g, '').toUpperCase().replace(/[0-9]+/g, '').trim(),
               automate: '0'
             }
 
@@ -100,24 +98,24 @@ module.exports = async (tmpDir, log) => {
                 } else infoJour.push('')
               }
               infoJour = infoJour.filter(elem => ![''].includes(elem))
-              base.horaire = '"' + infoJour.join(',') + '"'
+              base.horaire = infoJour.join(',')
             } else {
               base.horaire = ''
             }
 
             // Add the list of services available in the station
-            if (station.services[0].service !== undefined) base.services = '"' + station.services[0].service.join(',') + '"'
-            else if (station.services[0].trim().length === 0) base.services = ''
+            if (station.services[0].service !== undefined) {
+              station.services[0].service = station.services[0].service.map(elem => elem.replace(/,/g, ' -'))
+              base.services = station.services[0].service.join(',')
+            } else if (station.services[0].trim().length === 0) base.services = ''
             else base.services = station.services[0].trim()
 
             base.type_carburant = carburant.ATTR.nom.trim()
             base.prix_carburant = parseFloat(carburant.ATTR.valeur)
             // Convert the date to ISO 8601 format
             const date = new Date(carburant.ATTR.maj).toISOString()
-            base.maj_carburant = '"' + date + '"'
-
-            // Write the current line in the output file
-            outFile.write(Object.values(base).join(',') + endOfLine)
+            base.maj_carburant = date
+            tab.push(base)
           }
         }
       }
@@ -125,5 +123,5 @@ module.exports = async (tmpDir, log) => {
       console.log(error)
     }
   })
-  await outFile.close()
+  return tab
 }

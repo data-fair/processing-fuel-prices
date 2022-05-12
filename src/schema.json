@@ -1,7 +1,7 @@
 [
   {
     "key": "id",
-    "type": "integer",
+    "type": "string",
     "title": "id de la station",
     "description":"Identifiant correspondant de la station"
   },
@@ -9,43 +9,59 @@
     "key": "latitude",
     "type": "number",
     "title": "Latitude de la station",
-    "description":"Latitude de la station"
+    "description":"Latitude de la station",
+    "x-refersTo": "http://schema.org/latitude"
   },
   {
     "key": "longitude",
     "type": "number",
     "title": "Longitude de la station",
-    "description":"Longitude de la station"
+    "description":"Longitude de la station",
+    "x-refersTo": "http://schema.org/longitude"
   },
   {
     "key": "cp",
     "type": "string",
     "title": "Code postal de la station",
-    "description": "Code postal de la station"
+    "description": "Code postal de la station",
+    "x-refersTo": "http://schema.org/postalCode"
   },
   {
     "key": "code_DEP",
     "type": "string",
     "title": "Code du departement de la station",
-    "description": "Code du departement de la station"
+    "description": "Code du departement de la station",
+    "x-refersTo": "http://rdf.insee.fr/def/geo#codeDepartement"
   },
   {
     "key": "type_de_route",
     "type": "string",
     "title": "Station située au bord d'un type de route",
-    "description":"type de route sur lequel se trouve de la station"
+    "description":"type de route sur lequel se trouve de la station",
+    "x-labels": {
+      "R": "Régionale",
+      "A": "Autoroute",
+      "N": "Nationale"
+    },
+    "enum": [
+      "R",
+      "A",
+      "N"
+    ]
   },
   {
     "key": "adresse",
     "type": "string",
     "title": "Adresse de la station",
-    "description": "Adresse de la station"
+    "description": "Adresse de la station",
+    "x-refersTo": "http://schema.org/address"
   },
   {
     "key": "ville",
     "type": "string",
     "title": "Nom de la ville dans laquelle se trouve la station",
-    "description":"Nom de la ville dans la station"
+    "description":"Nom de la ville dans la station",
+    "x-refersTo": "http://schema.org/City"
   },
   {
     "key": "automate",
@@ -57,13 +73,16 @@
     "key": "horaire",
     "type": "string",
     "title": "Horaire ",
-    "description": "Horaires d'ouverture et de fermerture de la station sur une semaine. Suit le format https://schema.org/openingHours"
+    "description": "Horaires d'ouverture et de fermerture de la station sur une semaine. Suit le format https://schema.org/openingHours",
+    "x-refersTo": "https://schema.org/openingHours",
+    "separator": ", "
   },
   {
     "key": "services",
     "type": "string",
     "title": "Nom des services de la station",
-    "description": "Liste des services de la station"
+    "description": "Liste des services de la station",
+    "separator": ", "
   },
   {
     "key": "type_carburant",
@@ -81,6 +100,7 @@
     "key": "maj_carburant",
     "type": "string",
     "title": "Date de derniere mise à jour du carburant",
-    "description": "Dernière mise à jour du carburant"
+    "description": "Dernière mise à jour du carburant",
+    "x-refersTo": "http://schema.org/dateCreated"
   }
 ]
