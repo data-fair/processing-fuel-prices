@@ -5,6 +5,8 @@ const fs = require('fs')
 // const endOfLine = require('os').EOL
 // const datasetSchema = require('./schema.json')
 const iconv = require('iconv-lite')
+const dayjs = require('dayjs')
+require('dayjs/locale/fr')
 
 module.exports = async (tmpDir, log) => {
   await log.step('Traitement du fichier')
@@ -32,12 +34,12 @@ module.exports = async (tmpDir, log) => {
 
               adresse: station.adresse[0].replace(/"/g, ''),
               ville: station.ville[0].replace(/"/g, '').toUpperCase().replace(/[0-9]+/g, '').trim(),
-              automate: '0'
+              automate: false
             }
 
             // Recovery of timetable of station
             if (station.horaires !== undefined) {
-              base.automate = station.horaires[0].ATTR['automate-24-24'] === '' ? '0' : '1'
+              base.automate = station.horaires[0].ATTR['automate-24-24'] !== ''
               let infoJour = []
               for (const jour of station.horaires[0].jour) {
                 // Format the opening hours to https://schema.org/openingHours
@@ -113,8 +115,7 @@ module.exports = async (tmpDir, log) => {
             base.type_carburant = carburant.ATTR.nom.trim()
             base.prix_carburant = parseFloat(carburant.ATTR.valeur)
             // Convert the date to ISO 8601 format
-            const date = new Date(carburant.ATTR.maj).toISOString()
-            base.maj_carburant = date
+            base.maj_carburant = dayjs(carburant.ATTR.maj, 'YYYY-MM-DD HH:mm:ss', 'fr').format()
             tab.push(base)
           }
         }

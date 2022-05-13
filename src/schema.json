@@ -65,7 +65,7 @@
   },
   {
     "key": "automate",
-    "type": "string",
+    "type": "boolean",
     "title": "Type de la pompe a essence",
     "description":"Indique si le station possède des automates"
   },

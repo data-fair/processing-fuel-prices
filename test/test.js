@@ -38,7 +38,7 @@ describe('Station service processing', () => {
       clearFiles: false,
       skipUpload: false,
       datasetIdPrefix: 'gasoline',
-      datasetMode: 'create',
+      datasetMode: 'update',
       dataset: {
         title: 'fuel station test titre',
         id: 'fuel-station-test-id'

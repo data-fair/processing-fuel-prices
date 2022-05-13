@@ -13,8 +13,10 @@ const baseDataset = {
   schema: require('./src/schema.json'),
   primaryKey: ['id', 'type_carburant'],
   rest: {
-    properties: {
-      history: true
+    history: true,
+    historyTTL: {
+      value: 30,
+      unit: 'days'
     }
   }
 }
