@@ -35,13 +35,11 @@ describe('Station service processing', () => {
     const pluginConfig = { url: 'https://donnees.roulez-eco.fr/opendata/instantane' }
 
     const processingConfig = {
-      clearFiles: false,
-      skipUpload: false,
-      datasetIdPrefix: 'gasoline',
-      datasetMode: 'update',
+      clearFiles: true,
+      datasetMode: 'create',
       dataset: {
         title: 'fuel station test titre',
-        id: 'fuel-station-test-id'
+        id: 'fuel-station-test'
       }
     }
 

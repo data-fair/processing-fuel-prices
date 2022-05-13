@@ -12,7 +12,7 @@ module.exports = async (tmpDir, log) => {
   await log.step('Traitement du fichier')
   const tab = []
   // Change the encoding to UTF-8
-  const xmlString = iconv.decode(fs.readFileSync('PrixCarburants_instantane.xml'), 'iso-8859-1')
+  const xmlString = iconv.decode(fs.readFileSync('carburants.xml'), 'iso-8859-1')
   // Put in string all the xml file contents
   parser.parseString(xmlString, function (error, result) {
     if (error === null) {

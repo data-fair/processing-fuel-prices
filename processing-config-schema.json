@@ -13,8 +13,8 @@
           "type": "object",
           "required": ["title"],
           "properties": {
-            "id": {"type": "string", "title": "station-essence-france-metropole"},
-            "title": {"type": "string", "title": "Titre", "default": "station_essence_france_metropole"}
+            "id": {"type": "string", "title": "Identifiant du jeu de donnée"},
+            "title": {"type": "string", "title": "Titre du jeu de donnée", "default": "Station service"}
           }
         }
       }
@@ -25,6 +25,7 @@
         "datasetMode": { "type": "string", "const": "update" },
         "dataset": {
           "type": "object",
+          "title": "Jeu de donnée existant",
           "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
           "x-itemsProp": "results",
           "x-itemTitle": "title",
@@ -36,5 +37,14 @@
         }
       }
     }]
+  }, {
+    "title": "Paramètres",
+    "properties": {
+      "clearFiles": {
+        "title": "supprimer les fichiers téléchargés",
+        "type": "boolean",
+        "default": true
+      }
+    }
   }]
 }

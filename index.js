@@ -1,32 +1,35 @@
 const download = require('./src/download')
 const processData = require('./src/process')
-// const upload = require('./src/upload')
-
-const baseDataset = {
-  isRest: true,
-  description: 'une description',
-  origin: 'https://donnees.roulez-eco.fr/opendata/',
-  license: {
-    title: 'Licence Ouverte / Open Licence',
-    href: 'https://www.etalab.gouv.fr/licence-ouverte-open-licence'
-  },
-  schema: require('./src/schema.json'),
-  primaryKey: ['id', 'type_carburant'],
-  rest: {
-    history: true,
-    historyTTL: {
-      value: 30,
-      unit: 'days'
-    }
-  }
-}
+const fs = require('fs-extra')
 
 exports.run = async ({ pluginConfig, processingConfig, tmpDir, axios, log, patchConfig }) => {
   await download(pluginConfig, tmpDir, axios, log)
+
+  const baseDataset = {
+    isRest: true,
+    description: 'Ces données sont actualisées sur notre plateforme toutes les 3h. Elles proviennent d\'un traitement des données mises à disposition à partir du système d\'information \"Prix Carburants \" du Ministère de l\'économie, des finances et de la relance.\n\nIl y a un peu moins de 10 000 stations distinctes, mais dans le format que nous mettons à disposition, il y a une ligne par type de carburant par station. Le format des horaires d\'ouverture est [celui décrit sur schema.org](https://schema.org/openingHours).',
+    origin: pluginConfig.url,
+    license: {
+      title: 'Licence Ouverte / Open Licence',
+      href: 'https://www.etalab.gouv.fr/licence-ouverte-open-licence'
+    },
+    schema: require('./src/schema.json'),
+    primaryKey: ['id', 'type_carburant'],
+    rest: {
+      history: true,
+      historyTTL: {
+        active: true,
+        delay: {
+          value: 30,
+          unit: 'days'
+        }
+      }
+    }
+  }
+
   const body = {
     ...baseDataset,
     title: processingConfig.dataset.title
-    // extras: { processingId }
   }
 
   let dataset
@@ -38,15 +41,12 @@ exports.run = async ({ pluginConfig, processingConfig, tmpDir, axios, log, patch
       } catch (err) {
         if (err.status !== 404) throw err
       }
-      // permet de créer le jeu de donnée éditable avec l'identifiant spécifié
       dataset = (await axios.put('api/v1/datasets/' + processingConfig.dataset.id, body)).data
     } else {
-      // si aucun identifiant n'est spécifié, on créer le dataset juste à partir de son nom
       dataset = (await axios.post('api/v1/datasets', body)).data
     }
     await log.info(`jeu de donnée créé, id="${dataset.id}", title="${dataset.title}"`)
   } else if (processingConfig.datasetMode === 'update') {
-    // permet de vérifier l'existance du jeu de donnée avant de réaliser des opérations dessus
     await log.step('Vérification du jeu de données')
     dataset = (await axios.get(`api/v1/datasets/${processingConfig.dataset.id}`)).data
     if (!dataset) throw new Error(`le jeu de données n'existe pas, id${processingConfig.dataset.id}`)
@@ -64,5 +64,9 @@ exports.run = async ({ pluginConfig, processingConfig, tmpDir, axios, log, patch
       log.error(`${res.data.nbErrors} échecs sur ${lines.length} lignes à insérer`, res.data.errors)
       throw new Error('échec à l\'insertion des lignes dans le jeu de données')
     }
+  }
+
+  if (processingConfig.clearFiles) {
+    await fs.emptyDir('./')
   }
 }
