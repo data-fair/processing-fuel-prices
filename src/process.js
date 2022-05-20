@@ -1,28 +1,27 @@
 const xml2js = require('xml2js')
 const parser = new xml2js.Parser({ attrkey: 'ATTR' })
 const fs = require('fs')
-// const path = require('path')
-// const endOfLine = require('os').EOL
-// const datasetSchema = require('./schema.json')
+const path = require('path')
 const iconv = require('iconv-lite')
 const dayjs = require('dayjs')
-require('dayjs/locale/fr')
+const customParseFormat = require('dayjs/plugin/customParseFormat')
+dayjs.extend(customParseFormat)
 
-module.exports = async (tmpDir, log) => {
+require('dayjs/locale/fr')
+const md5 = require('md5')
+
+module.exports = async (processingConfig, tmpDir, axios, log) => {
   await log.step('Traitement du fichier')
   const tab = []
   // Change the encoding to UTF-8
-  const xmlString = iconv.decode(fs.readFileSync('carburants.xml'), 'iso-8859-1')
+  const xmlString = iconv.decode(fs.readFileSync(path.join(tmpDir, 'carburants.xml')), 'iso-8859-1')
   // Put in string all the xml file contents
   parser.parseString(xmlString, function (error, result) {
     if (error === null) {
       const donnee = result.pdv_liste.pdv
-
       for (const station of donnee) {
         if (station.prix !== undefined) {
           for (const carburant of station.prix) {
-            // Recover the first data (easy to take from the database)
-
             // Base = line for the future csv file
             const base = {
               id: station.ATTR.id,
@@ -124,5 +123,148 @@ module.exports = async (tmpDir, log) => {
       console.log(error)
     }
   })
-  return tab
+
+  const stats = {
+    ajout: 0,
+    modif: 0,
+    modifSansMaj: 0,
+    suppr: 0
+  }
+
+  if (processingConfig.datasetMode === 'create') {
+    stats.ajout = tab.length
+    await log.info(`Création du jeu de donnée, ajout de ${stats.ajout} lignes`)
+    return tab
+  } else if (processingConfig.datasetMode === 'update') {
+    const lastUpdate = (await axios.get(processingConfig.dataset.href)).data.dataUpdatedAt
+    if (lastUpdate) {
+      await log.info(`Dernière mise à jour des données: ${dayjs(lastUpdate).format('DD/MM/YYYY HH:mm:ss')}`)
+      // tabFilter is the array containing fuel station that were updated after the last update
+      let tabFilter = tab.filter((elem) => dayjs(elem.maj_carburant).isAfter(dayjs(lastUpdate)))
+      let tabId = [...new Set(tabFilter.map(elem => elem.id))]
+
+      await log.info(`Depuis la dernière mise à jour, il y a eu ${tabFilter.length} modifications sur ${tabId.length} stations uniques dans le fichier`)
+
+      // split the stringRequest because qs only accept regex of 1000 characters max
+      let stringRequest = ''
+      const ecart = 110
+      do {
+        stringRequest += `/${tabId.slice(0, ecart).join('|')}/`
+        tabId = tabId.slice(ecart, tabId.length + 1)
+      } while (tabId.length > ecart)
+      if (tabId.length > 0) stringRequest += `/${tabId.slice(0, ecart).join('|')}/`
+
+      const params = {
+        size: 10000
+      }
+
+      if (tabFilter.length > 1) {
+        // data is the array containing all of the results of requests
+        let data = []
+
+        // To avoid URL overflow, break at 6500 char. The limit is 10000 but with the header and parameters of the requests we can't go above
+        const breakRequestAt = 6500
+        await log.info(`Besoin de ${(stringRequest.length / breakRequestAt + 1).toFixed(0)} requête(s) pour couvrir l'ensemble des modifications.`)
+        let cpt = 0
+        while (stringRequest.length > breakRequestAt) {
+          cpt++
+          // get the closest line delimiter to slice the string well
+          const firstIndex = stringRequest.indexOf('/') < stringRequest.indexOf('|') ? stringRequest.indexOf('/') : stringRequest.indexOf('|')
+          const tmpString = stringRequest.slice(firstIndex + 1, breakRequestAt)
+          // depends of the last delimiter the end of input is not the same
+          const lastGroup = tmpString.lastIndexOf('/')
+          const lastNumber = tmpString.lastIndexOf('|')
+
+          if (lastGroup > lastNumber) params.qs = `id:(/${tmpString.substring(0, lastGroup)})`
+          else params.qs = `id:(/${tmpString.substring(0, lastNumber)}/)`
+
+          await log.info(`Requête numéro ${cpt}`)
+          // process the requests and add the result to the data array
+          try {
+            data = data.concat((await axios.get(processingConfig.dataset.href + '/lines', { params })).data.results)
+          } catch (err) {
+            log.error(err)
+          }
+          // get the next string
+          stringRequest = stringRequest.substring(firstIndex + 1 + (lastGroup > lastNumber ? lastGroup : lastNumber), stringRequest.length)
+        }
+        if (stringRequest.length > 0) {
+          // process the last group
+          cpt++
+          if (stringRequest.indexOf('|') < stringRequest.indexOf('/')) stringRequest = stringRequest.replace('|', '/')
+          params.qs = `id:(${stringRequest})`
+          await log.info(`Requête numéro ${cpt}`)
+          try {
+            data = data.concat((await axios.get(processingConfig.dataset.href + '/lines', { params })).data.results)
+          } catch (err) {
+            log.error(err)
+          }
+        }
+
+        await log.info('Début du filtre pour déterminer la nature des modifications')
+        // find elements that are in the downloaded file but not in the current dataset
+        const toAdd = tabFilter.filter(o => !data.some(i => o.id === i.id && o.type_carburant === i.type_carburant))
+
+        for (const line of toAdd) {
+          tabFilter.find((elem) => elem.id === line.id && elem.type_carburant === line.type_carburant)._action = 'create'
+          stats.ajout++
+        }
+
+        // find elements that must be updated (update on the line)
+        // currCarbu is the current dataset value
+        for (const currCarbu of data) {
+          for (const key of Object.keys(currCarbu)) {
+            if (key.startsWith('_') && key !== '_id') delete currCarbu[key]
+          }
+          // requests gives us string with comma separated by space
+          currCarbu.services = currCarbu.services.split(',').map((elem) => elem.trim()).join(',')
+          currCarbu.horaire = currCarbu.horaire.split(',').map((elem) => elem.trim()).join(',')
+          // find the correct line that may have change
+          const line = tabFilter.find((elem) => elem.id === currCarbu.id && elem.type_carburant === currCarbu.type_carburant)
+          if (line !== undefined) {
+            const stoMaj = line.maj_carburant
+            delete currCarbu.maj_carburant
+            delete line.maj_carburant
+            line._id = currCarbu._id
+            const lineInTab = tabFilter.find((elem) => elem.id === line.id && elem.type_carburant === line.type_carburant)
+
+            if (md5(JSON.stringify(line, Object.keys(line).sort())) !== md5(JSON.stringify(currCarbu, Object.keys(line).sort()))) {
+              // update only when the price is different
+              lineInTab._action = 'update'
+              lineInTab._id = currCarbu._id
+              stats.modif++
+            } else {
+              lineInTab.status = 'delete'
+              stats.modifSansMaj++
+            }
+            line.maj_carburant = stoMaj
+          }
+        }
+
+        // find elements that are in the dataset but no longer in the downloaded file
+        const dataSupp = (await axios.get(processingConfig.dataset.href + '/lines', { params: { sort: '_updatedAt', size: 4000, select: 'id,type_carburant,_id' } })).data.results
+
+        const toSupp = dataSupp.filter(o => !tab.some(i => (i.id === o.id && i.type_carburant === o.type_carburant)))
+        for (const supp of toSupp) {
+          supp._action = 'delete'
+          delete supp._score
+          tabFilter.push(supp)
+          stats.suppr++
+        }
+
+        tabFilter = tabFilter.filter((elem) => elem.status !== 'delete')
+        await log.info(`Ajouts: ${stats.ajout}, Modifications: ${stats.modif}, Modifications sans changement: ${stats.modifSansMaj} Suppressions: ${stats.suppr}`)
+
+        return tabFilter
+      } else {
+        // tabFilter == 0 => nothing to do
+        await log.info('Rien à faire')
+        return undefined
+      }
+    } else {
+      // lastUpdate is undef
+      await log.error('Impossible de déterminer la date de dernière mise à jour des données')
+      return undefined
+    }
+  }
 }

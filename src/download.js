@@ -9,7 +9,6 @@ module.exports = async (pluginConfig, dir = 'data', axios, log) => {
   const fileName = path.parse(new URL(pluginConfig.url).pathname).name + '.zip'
   const file = `${dir}/${fileName}`
 
-  console.log(`download ${pluginConfig.url} -> ${file}`)
   // this is used only in dev
   if (await fs.pathExists(file)) {
     await log.info(`Le fichier ${file} existe déjà`)
@@ -34,10 +33,10 @@ module.exports = async (pluginConfig, dir = 'data', axios, log) => {
     await fs.close(fd)
   }
 
-  console.log(`unzip ${file}`)
-  await exec(`unzip -o ${file}`)
-  const fileXML = (await fs.readdir('.')).filter(file => file.endsWith('.xml') && file.toUpperCase().includes('CARBURANT'))
-  await fs.rename(fileXML[0], 'carburants.xml')
+  log.info(`Extraction de l'archive ${file}`)
+  await exec(`unzip -o ${file} -d ${dir}`)
+  const fileXML = (await fs.readdir(dir)).filter(file => file.endsWith('.xml') && file.toUpperCase().includes('CARBURANT'))
+  await fs.rename(path.join(dir, fileXML[0]), path.join(dir, 'carburants.xml'))
   // remove the zip file
-  await fs.remove(fileName)
+  await fs.remove(file)
 }

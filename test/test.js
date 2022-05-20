@@ -35,13 +35,17 @@ describe('Station service processing', () => {
     const pluginConfig = { url: 'https://donnees.roulez-eco.fr/opendata/instantane' }
 
     const processingConfig = {
-      clearFiles: true,
-      datasetMode: 'create',
+      clearFiles: false,
+      datasetMode: 'update',
       dataset: {
         title: 'fuel station test titre',
-        id: 'fuel-station-test'
-      }
+        id: 'fuel-station-test3'
+      },
+      tmpDir: 'data/tmp',
+      workDir: 'data/work'
     }
+
+    processingConfig.dataset.href = `api/v1/datasets/${processingConfig.dataset.id}`
 
     const log = {
       step: (msg) => console.log(chalk.blue.bold.underline(`[${moment().format('LTS')}] ${msg}`)),
@@ -57,11 +61,11 @@ describe('Station service processing', () => {
       Object.assign(processingConfig, patch)
     }
 
-    const cwd = process.cwd()
-    await fs.ensureDir('data/')
-    process.chdir('data/')
-    console.log(process.cwd())
-    await processing.run({ pluginConfig, processingConfig, tmpDir: path.resolve('./'), axios: axiosInstance, log, patchConfig })
-    process.chdir(cwd)
+    await fs.ensureDir(processingConfig.tmpDir)
+    await fs.ensureDir(processingConfig.workDir)
+    const tmpDir = path.resolve(processingConfig.tmpDir)
+
+    process.chdir(processingConfig.workDir)
+    await processing.run({ pluginConfig, processingConfig, tmpDir, axios: axiosInstance, log, patchConfig })
   })
 })

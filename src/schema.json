@@ -3,20 +3,20 @@
     "key": "id",
     "type": "string",
     "title": "id de la station",
-    "description":"Identifiant correspondant de la station"
+    "description": "Identifiant correspondant de la station"
   },
   {
     "key": "latitude",
     "type": "number",
     "title": "Latitude de la station",
-    "description":"Latitude de la station",
+    "description": "Latitude de la station",
     "x-refersTo": "http://schema.org/latitude"
   },
   {
     "key": "longitude",
     "type": "number",
     "title": "Longitude de la station",
-    "description":"Longitude de la station",
+    "description": "Longitude de la station",
     "x-refersTo": "http://schema.org/longitude"
   },
   {
@@ -37,17 +37,9 @@
     "key": "type_de_route",
     "type": "string",
     "title": "Station située au bord d'un type de route",
-    "description":"type de route sur lequel se trouve de la station",
-    "x-labels": {
-      "R": "Régionale",
-      "A": "Autoroute",
-      "N": "Nationale"
-    },
-    "enum": [
-      "R",
-      "A",
-      "N"
-    ]
+    "description": "type de route sur lequel se trouve de la station",
+    "x-labels": {"R": "Régionale", "A": "Autoroute", "N": "Nationale"},
+    "enum": ["R", "A", "N"]
   },
   {
     "key": "adresse",
@@ -60,14 +52,14 @@
     "key": "ville",
     "type": "string",
     "title": "Nom de la ville dans laquelle se trouve la station",
-    "description":"Nom de la ville dans la station",
+    "description": "Nom de la ville dans la station",
     "x-refersTo": "http://schema.org/City"
   },
   {
     "key": "automate",
     "type": "boolean",
     "title": "Type de la pompe a essence",
-    "description":"Indique si le station possède des automates"
+    "description": "Indique si le station possède des automates"
   },
   {
     "key": "horaire",
