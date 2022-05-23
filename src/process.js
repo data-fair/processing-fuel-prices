@@ -121,6 +121,7 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
       }
     } else {
       console.log(error)
+      throw error
     }
   })
 
@@ -162,8 +163,8 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
         // data is the array containing all of the results of requests
         let data = []
 
-        // To avoid URL overflow, break at 6500 char. The limit is 10000 but with the header and parameters of the requests we can't go above
-        const breakRequestAt = 6500
+        // To avoid URL overflow, break at 2700 char
+        const breakRequestAt = 2700
         await log.info(`Besoin de ${(stringRequest.length / breakRequestAt + 1).toFixed(0)} requête(s) pour couvrir l'ensemble des modifications.`)
         let cpt = 0
         while (stringRequest.length > breakRequestAt) {
