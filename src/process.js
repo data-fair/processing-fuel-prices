@@ -183,7 +183,9 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
           try {
             data = data.concat((await axios.get(processingConfig.dataset.href + '/lines', { params })).data.results)
           } catch (err) {
-            log.error(err)
+            await log.error(err)
+            await log.info('Paramètres de requête ' + JSON.stringify(params))
+            throw err
           }
           // get the next string
           stringRequest = stringRequest.substring(firstIndex + 1 + (lastGroup > lastNumber ? lastGroup : lastNumber), stringRequest.length)
@@ -197,7 +199,9 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
           try {
             data = data.concat((await axios.get(processingConfig.dataset.href + '/lines', { params })).data.results)
           } catch (err) {
-            log.error(err)
+            await log.error(err)
+            await log.info('Paramètres de requête ' + JSON.stringify(params))
+            throw err
           }
         }
 
@@ -213,9 +217,6 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
         // find elements that must be updated (update on the line)
         // currCarbu is the current dataset value
         for (const currCarbu of data) {
-          for (const key of Object.keys(currCarbu)) {
-            if (key.startsWith('_') && key !== '_id') delete currCarbu[key]
-          }
           // requests gives us string with comma separated by space
           currCarbu.services = currCarbu.services.split(',').map((elem) => elem.trim()).join(',')
           currCarbu.horaire = currCarbu.horaire.split(',').map((elem) => elem.trim()).join(',')
@@ -228,7 +229,7 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
             line._id = currCarbu._id
             const lineInTab = tabFilter.find((elem) => elem.id === line.id && elem.type_carburant === line.type_carburant)
 
-            if (md5(JSON.stringify(line, Object.keys(line).sort())) !== md5(JSON.stringify(currCarbu, Object.keys(line).sort()))) {
+            if (md5(JSON.stringify(line, Object.keys(line).filter(key => !key.startsWith('_')).sort())) !== md5(JSON.stringify(currCarbu, Object.keys(line).filter(key => !key.startsWith('_')).sort()))) {
               // update only when the price is different
               lineInTab._action = 'update'
               lineInTab._id = currCarbu._id
@@ -259,12 +260,10 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
       } else {
         // tabFilter == 0 => nothing to do
         await log.info('Rien à faire')
-        return undefined
       }
     } else {
       // lastUpdate is undef
       await log.error('Impossible de déterminer la date de dernière mise à jour des données')
-      return undefined
     }
   }
 }

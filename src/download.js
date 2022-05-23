@@ -33,7 +33,7 @@ module.exports = async (pluginConfig, dir = 'data', axios, log) => {
     await fs.close(fd)
   }
 
-  log.info(`Extraction de l'archive ${file}`)
+  await log.info(`Extraction de l'archive ${file}`)
   await exec(`unzip -o ${file} -d ${dir}`)
   const fileXML = (await fs.readdir(dir)).filter(file => file.endsWith('.xml') && file.toUpperCase().includes('CARBURANT'))
   await fs.rename(path.join(dir, fileXML[0]), path.join(dir, 'carburants.xml'))
