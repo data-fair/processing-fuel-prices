@@ -32,14 +32,14 @@ describe('Station service processing', () => {
       return Promise.reject(error.response)
     })
 
-    const pluginConfig = { url: 'https://donnees.roulez-eco.fr/opendata/instantane' }
+    const pluginConfig = { url: 'https://donnees.roulez-eco.fr/opendata/instantane', limit: 2500 }
 
     const processingConfig = {
       clearFiles: false,
       datasetMode: 'update',
       dataset: {
         title: 'fuel station test titre',
-        id: 'fuel-station-test3'
+        id: 'fuel-station-test2'
       },
       tmpDir: 'data/tmp',
       workDir: 'data/work'

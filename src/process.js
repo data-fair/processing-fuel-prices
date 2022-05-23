@@ -10,7 +10,7 @@ dayjs.extend(customParseFormat)
 require('dayjs/locale/fr')
 const md5 = require('md5')
 
-module.exports = async (processingConfig, tmpDir, axios, log) => {
+module.exports = async (pluginConfig, processingConfig, tmpDir, axios, log) => {
   await log.step('Traitement du fichier')
   const tab = []
   // Change the encoding to UTF-8
@@ -163,8 +163,9 @@ module.exports = async (processingConfig, tmpDir, axios, log) => {
         // data is the array containing all of the results of requests
         let data = []
 
-        // To avoid URL overflow, break at 2700 char
-        const breakRequestAt = 2700
+        // To avoid URL overflow, break at n char
+        await log.info(`Limite URL : ${pluginConfig.limit}`)
+        const breakRequestAt = pluginConfig.limit
         await log.info(`Besoin de ${(stringRequest.length / breakRequestAt + 1).toFixed(0)} requête(s) pour couvrir l'ensemble des modifications.`)
         let cpt = 0
         while (stringRequest.length > breakRequestAt) {

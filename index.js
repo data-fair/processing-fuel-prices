@@ -57,7 +57,7 @@ exports.run = async ({ pluginConfig, processingConfig, tmpDir, axios, log, patch
   }
 
   await download(pluginConfig, tmpDir, axios, log)
-  const bulk = await processData(processingConfig, tmpDir, axios, log)
+  const bulk = await processData(pluginConfig, processingConfig, tmpDir, axios, log)
 
   // bulk is undefined when there is no line to update
   if (bulk !== undefined) {

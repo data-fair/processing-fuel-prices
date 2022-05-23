@@ -5,6 +5,11 @@
       "type": "string",
       "title": "Url d'accès aux données sources",
       "default": "https://donnees.roulez-eco.fr/opendata/instantane"
+    },
+    "limit":{
+      "type": "integer",
+      "title": "Limite des requêtes (en caractères)",
+      "default": 2500
     }
   }
 }
