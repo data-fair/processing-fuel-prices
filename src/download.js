@@ -34,7 +34,11 @@ module.exports = async (pluginConfig, dir = 'data', axios, log) => {
   }
 
   await log.info(`Extraction de l'archive ${file}`)
-  await exec(`unzip -o ${file} -d ${dir}`)
+  try {
+    await exec(`unzip -o ${file} -d ${dir}`)
+  } catch (err) {
+    log.warning(err)
+  }
   const fileXML = (await fs.readdir(dir)).filter(file => file.endsWith('.xml') && file.toUpperCase().includes('CARBURANT'))
   await fs.rename(path.join(dir, fileXML[0]), path.join(dir, 'carburants.xml'))
   // remove the zip file
