@@ -220,8 +220,8 @@ module.exports = async (pluginConfig, processingConfig, tmpDir, axios, log) => {
         // currCarbu is the current dataset value
         for (const currCarbu of data) {
           // requests gives us string with comma separated by space
-          currCarbu.services = currCarbu.services.split(',').map((elem) => elem.trim()).join(',')
-          currCarbu.horaire = currCarbu.horaire.split(',').map((elem) => elem.trim()).join(',')
+          currCarbu.services = currCarbu.services?.split(',').map((elem) => elem.trim()).join(',')
+          currCarbu.horaire = currCarbu.horaire?.split(',').map((elem) => elem.trim()).join(',')
           // find the correct line that may have change
           const line = tabFilter.find((elem) => elem.id === currCarbu.id && elem.type_carburant === currCarbu.type_carburant)
           if (line !== undefined) {
