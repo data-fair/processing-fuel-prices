@@ -62,14 +62,26 @@ exports.run = async ({ pluginConfig, processingConfig, tmpDir, axios, log, patch
   // bulk is undefined when there is no line to update
   if (bulk !== undefined) {
     await log.info(`envoi de ${bulk.length} lignes vers le jeu de données`)
+    let nbAlreadyDeleted = 0
     while (bulk.length) {
       const lines = bulk.splice(0, 1000)
       const res = await axios.post(`api/v1/datasets/${dataset.id}/_bulk_lines`, lines)
       if (res.data.nbErrors) {
-        log.error(`${res.data.nbErrors} échecs sur ${lines.length} lignes à insérer`, res.data.errors)
-        console.log(res.data.errors.error)
-        throw new Error('échec à l\'insertion des lignes dans le jeu de données')
+        const errors = res.data.errors || []
+        // a line we ask to delete that is already gone is not a failure, the target state is
+        // reached. Any other error, and any error we cannot attribute (the API caps the detailed
+        // list at 50), aborts the run.
+        const ignorable = errors.length === res.data.nbErrors &&
+          errors.every(err => err.status === 404 && lines[err.line] && lines[err.line]._action === 'delete')
+        if (!ignorable) {
+          await log.error(`${res.data.nbErrors} échecs sur ${lines.length} lignes à insérer`, errors)
+          throw new Error('échec à l\'insertion des lignes dans le jeu de données')
+        }
+        nbAlreadyDeleted += res.data.nbErrors
       }
+    }
+    if (nbAlreadyDeleted) {
+      await log.warning(`${nbAlreadyDeleted} ligne(s) à supprimer étaient déjà absentes du jeu de données`)
     }
   }
 

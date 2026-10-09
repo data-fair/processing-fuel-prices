@@ -212,7 +212,10 @@ module.exports = async (pluginConfig, processingConfig, tmpDir, axios, log) => {
         const toAdd = tabFilter.filter(o => !data.some(i => o.id === i.id && o.type_carburant === i.type_carburant))
 
         for (const line of toAdd) {
-          tabFilter.find((elem) => elem.id === line.id && elem.type_carburant === line.type_carburant)._action = 'create'
+          // createOrUpdate rather than create: the presence test above is made against the search
+          // index, which can lag behind the stored lines. A 'create' on a line that does exist is
+          // rejected (409), an upsert converges to the same state either way.
+          tabFilter.find((elem) => elem.id === line.id && elem.type_carburant === line.type_carburant)._action = 'createOrUpdate'
           stats.ajout++
         }
 
@@ -233,7 +236,9 @@ module.exports = async (pluginConfig, processingConfig, tmpDir, axios, log) => {
 
             if (md5(JSON.stringify(line, Object.keys(line).filter(key => !key.startsWith('_')).sort())) !== md5(JSON.stringify(currCarbu, Object.keys(line).filter(key => !key.startsWith('_')).sort()))) {
               // update only when the price is different
-              lineInTab._action = 'update'
+              // see the comment on toAdd above: 'update' would be rejected (404) if the line is
+              // in the search index but not in the stored lines
+              lineInTab._action = 'createOrUpdate'
               lineInTab._id = currCarbu._id
               stats.modif++
             } else {
