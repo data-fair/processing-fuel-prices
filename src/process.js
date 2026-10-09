@@ -137,7 +137,8 @@ module.exports = async (pluginConfig, processingConfig, tmpDir, axios, log) => {
     await log.info(`Création du jeu de donnée, ajout de ${stats.ajout} lignes`)
     return tab
   } else if (processingConfig.datasetMode === 'update') {
-    const lastUpdate = (await axios.get(processingConfig.dataset.href)).data.dataUpdatedAt
+    // dataUpdatedAt moves as soon as one line is written, even by a run that fails right after
+    const lastUpdate = processingConfig.lastSync || (await axios.get(processingConfig.dataset.href)).data.dataUpdatedAt
     if (lastUpdate) {
       await log.info(`Dernière mise à jour des données: ${dayjs(lastUpdate).format('DD/MM/YYYY HH:mm:ss')}`)
       // tabFilter is the array containing fuel station that were updated after the last update

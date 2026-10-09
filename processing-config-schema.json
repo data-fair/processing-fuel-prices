@@ -44,6 +44,11 @@
         "title": "supprimer les fichiers téléchargés",
         "type": "boolean",
         "default": true
+      },
+      "lastSync": {
+        "title": "Date de la dernière synchronisation",
+        "description": "Renseignée automatiquement après chaque exécution réussie. Seules les lignes mises à jour après cette date sont traitées : indiquer une date plus ancienne pour forcer un rattrapage, ou vider le champ pour revenir à la date de mise à jour du jeu de données.",
+        "type": "string"
       }
     }
   }]

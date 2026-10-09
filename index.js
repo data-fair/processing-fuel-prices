@@ -62,6 +62,8 @@ exports.run = async ({ pluginConfig, processingConfig, tmpDir, axios, log, patch
   // bulk is undefined when there is no line to update
   if (bulk !== undefined) {
     await log.info(`envoi de ${bulk.length} lignes vers le jeu de données`)
+    // newest source date in this run, saved only once every line is sent (read back in process.js)
+    const lastSync = bulk.reduce((max, line) => line.maj_carburant && new Date(line.maj_carburant) > new Date(max || 0) ? line.maj_carburant : max, undefined)
     let nbAlreadyDeleted = 0
     while (bulk.length) {
       const lines = bulk.splice(0, 1000)
@@ -83,6 +85,7 @@ exports.run = async ({ pluginConfig, processingConfig, tmpDir, axios, log, patch
     if (nbAlreadyDeleted) {
       await log.warning(`${nbAlreadyDeleted} ligne(s) à supprimer étaient déjà absentes du jeu de données`)
     }
+    if (lastSync) await patchConfig({ lastSync: new Date(lastSync).toISOString() })
   }
 
   if (processingConfig.clearFiles) {
