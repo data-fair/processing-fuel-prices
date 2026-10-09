@@ -1,13 +1,20 @@
 {
   "name": "@data-fair/processing-fuel-prices",
   "version": "1.2.5",
-  "description": "Inject gasoline price in France into data-fair datasets",
-  "main": "index.js",
+  "description": "Inject fuel prices in France into data-fair datasets",
+  "main": "index.ts",
+  "type": "module",
   "scripts": {
-    "test": "mocha",
-    "lint": "eslint --ignore-path .gitignore .",
-    "lint-fix": "eslint --ignore-path .gitignore --fix .",
-    "start": "node src/process.js"
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix .",
+    "prepare": "husky || true",
+    "build-types": "export NODE_OPTIONS='--experimental-strip-types' && df-build-types ./config && df-build-types ./types",
+    "test-base": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=spec --test-reporter-destination=stdout",
+    "test": "npm run test-base test-it/*.ts"
+  },
+  "imports": {
+    "#config": "./lib/config.ts",
+    "#types/*": "./types/*"
   },
   "repository": {
     "type": "git",
@@ -17,25 +24,36 @@
     "data-fair-processings-plugin"
   ],
   "author": "Philippe Laidin, Benjamin Giraud-renard",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/data-fair/processing-fuel-prices/issues"
   },
   "homepage": "https://github.com/data-fair/processing-fuel-prices#readme",
-  "devDependencies": {
-    "axios": "^0.21.4",
-    "config": "^3.3.6",
-    "mocha": "^8.2.1",
-    "moment": "^2.29.2",
-    "standard": "^16.0.3"
-  },
   "dependencies": {
-    "dayjs": "^1.11.2",
-    "form-data": "^4.0.0",
-    "fs-extra": "^10.0.1",
-    "iconv-lite": "^0.6.3",
-    "md5": "^2.3.0",
-    "pump": "^3.0.0",
-    "xml2js": "^0.4.23"
-  }
+    "dayjs": "^1.11.23",
+    "fs-extra": "^11.4.1",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@data-fair/lib-common-types": "^1.24.0",
+    "@data-fair/lib-processing-dev": "^0.3.0",
+    "@data-fair/lib-types-builder": "^1.14.4",
+    "@data-fair/lib-utils": "^1.14.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/xml2js": "^0.4.14",
+    "axios": "^1.20.0",
+    "config": "^4.4.2",
+    "debug": "^4.4.3",
+    "eslint": "^9.39.5",
+    "husky": "^9.1.7",
+    "neostandard": "^0.12.2",
+    "typescript": "^5.9.3",
+    "ws": "^8.22.0"
+  },
+  "files": [
+    "processing-config-schema.json",
+    "./lib/**/*"
+  ]
 }

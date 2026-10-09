@@ -1,55 +1,59 @@
 {
   "type": "object",
-  "x-display": "tabs",
+  "layout": "tabs",
   "required": ["datasetMode"],
-  "allOf": [{
-    "title": "Jeu de données",
-    "oneOf": [{
-      "title": "Créer un jeu de données",
-      "required": ["dataset"],
-      "properties": {
-        "datasetMode": { "type": "string", "const": "create", "title": "Action" },
-        "dataset": {
-          "type": "object",
-          "required": ["title"],
+  "allOf": [
+    {
+      "title": "Jeu de données",
+      "default": { "datasetMode": "create", "datasetTitle": "Prix des carburants" },
+      "oneOf": [
+        {
+          "title": "Créer un jeu de données",
           "properties": {
-            "title": {"type": "string", "title": "Titre du jeu de donnée", "default": "Prix des carburants"}
+            "datasetMode": { "type": "string", "const": "create", "title": "Action" },
+            "datasetTitle": {
+              "type": "string",
+              "title": "Titre du jeu de données à créer",
+              "description": "Le jeu de données est créé lors de la première exécution, le traitement passe ensuite automatiquement en mode mise à jour.",
+              "default": "Prix des carburants"
+            }
+          }
+        },
+        {
+          "title": "Mettre à jour un jeu de données",
+          "required": ["dataset"],
+          "properties": {
+            "datasetMode": { "type": "string", "const": "update", "title": "Action" },
+            "dataset": {
+              "type": "object",
+              "title": "Jeu de données existant",
+              "layout": {
+                "getItems": {
+                  "url": "${context.dataFairUrl}/api/v1/datasets?select=id,title&size=50&${context.ownerFilter}&raw=true",
+                  "qSearchParam": "q",
+                  "itemsResults": "data.results",
+                  "itemTitle": "item.title",
+                  "itemKey": "item.id"
+                }
+              },
+              "properties": {
+                "id": { "type": "string", "title": "Identifiant" },
+                "title": { "type": "string", "title": "Titre" }
+              }
+            }
           }
         }
-      }
-    }, {
-      "title": "Mettre à jour un jeu de données",
-      "required": ["dataset"],
+      ]
+    },
+    {
+      "title": "Paramètres",
       "properties": {
-        "datasetMode": { "type": "string", "const": "update" },
-        "dataset": {
-          "type": "object",
-          "title": "Jeu de donnée existant",
-          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-          "x-itemsProp": "results",
-          "x-itemTitle": "title",
-          "x-itemKey": "id",
-          "properties": {
-            "id": {"type": "string", "title": "Identifiant"},
-            "href": { "type": "string", "title": "url" },
-            "title": {"type": "string", "title": "Titre"}
-          }
+        "lastSync": {
+          "title": "Date de la dernière synchronisation",
+          "description": "Renseignée automatiquement après chaque exécution réussie. Seules les lignes mises à jour après cette date sont traitées : indiquer une date plus ancienne pour forcer un rattrapage, ou vider le champ pour revenir à la date de mise à jour du jeu de données.",
+          "type": "string"
         }
-      }
-    }]
-  }, {
-    "title": "Paramètres",
-    "properties": {
-      "clearFiles": {
-        "title": "supprimer les fichiers téléchargés",
-        "type": "boolean",
-        "default": true
-      },
-      "lastSync": {
-        "title": "Date de la dernière synchronisation",
-        "description": "Renseignée automatiquement après chaque exécution réussie. Seules les lignes mises à jour après cette date sont traitées : indiquer une date plus ancienne pour forcer un rattrapage, ou vider le champ pour revenir à la date de mise à jour du jeu de données.",
-        "type": "string"
       }
     }
-  }]
+  ]
 }
