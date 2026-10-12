@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/processing-fuel-prices",
-  "version": "1.2.5",
+  "version": "1.3.0",
   "description": "Inject fuel prices in France into data-fair datasets",
   "main": "index.ts",
   "type": "module",
