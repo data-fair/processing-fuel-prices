@@ -7,7 +7,7 @@ import { promisify } from 'util'
 import { execFile } from 'child_process'
 import type { AxiosInstance } from 'axios'
 import type { ProcessingConfig } from '#types/processingConfig/index.ts'
-import processData, { parseStations, type Line } from '../lib/process.ts'
+import processData, { parseStations } from '../lib/process.ts'
 
 const zip = path.join(import.meta.dirname, 'resources', 'instantane.zip')
 const log = { step: async () => {}, task: async () => {}, progress: async () => {}, info: async () => {}, error: async () => {}, warning: async () => {}, debug: async () => {} }
@@ -19,15 +19,12 @@ const extractSample = async () => {
   return dir
 }
 
-// maj_carburant depends on the timezone of the process, see the comparison without it
-const withoutDate = ({ maj_carburant: maj, ...line }: Partial<Line>) => line
-
 describe('parseStations', () => {
   it('builds one line per station and fuel type, as the previous version did', async () => {
     const dir = await extractSample()
     const tab = await parseStations(fs.readFileSync(path.join(dir, 'carburants.xml')).toString('latin1'))
     assert.equal(tab.length, 3, 'the station without prices is skipped')
-    assert.deepEqual(withoutDate(tab[0]), {
+    assert.deepEqual(tab[0], {
       id: '75000001',
       latitude: 48.85,
       longitude: 2.35,
@@ -40,9 +37,9 @@ describe('parseStations', () => {
       horaire: 'Mo-Fr 07:00-20:00,Sa 08:00-12:00',
       services: 'Lavage - aspirateur,Boutique alimentaire',
       type_carburant: 'Gazole',
-      prix_carburant: 2.319
+      prix_carburant: 2.319,
+      maj_carburant: '2026-10-07T08:54:39+02:00'
     })
-    assert.match(tab[0].maj_carburant!, /^2026-10-07T08:54:39[+-]\d\d:\d\d$/)
     assert.equal(tab[1].ville, 'SAINT-ÉTIENNE', 'the latin1 source is decoded')
     assert.equal(tab[1].horaire, '')
     assert.equal(tab[1].services, '')

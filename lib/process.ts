@@ -4,13 +4,16 @@ import { createHash } from 'crypto'
 import { parseStringPromise } from 'xml2js'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat.js'
-import 'dayjs/locale/fr.js'
+import utc from 'dayjs/plugin/utc.js'
+import timezone from 'dayjs/plugin/timezone.js'
 import type { AxiosInstance } from 'axios'
 import type { ProcessingContext } from '@data-fair/lib-common-types/processings.js'
 import type { ProcessingConfig } from '#types/processingConfig/index.ts'
 import { XML_FILE } from './download.ts'
 
 dayjs.extend(customParseFormat)
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 type Log = ProcessingContext<ProcessingConfig>['log']
 
@@ -117,8 +120,8 @@ export const parseStations = async (xmlString: string): Promise<Line[]> => {
 
       base.type_carburant = carburant.ATTR.nom.trim()
       base.prix_carburant = parseFloat(carburant.ATTR.valeur)
-      // Convert the date to ISO 8601 format
-      base.maj_carburant = dayjs(carburant.ATTR.maj, 'YYYY-MM-DD HH:mm:ss', 'fr').format()
+      // the source gives a French local time without offset, never rely on the timezone of the process
+      base.maj_carburant = dayjs.tz(carburant.ATTR.maj, 'YYYY-MM-DD HH:mm:ss', 'Europe/Paris').format()
       tab.push(base)
     }
   }
@@ -158,7 +161,7 @@ export default async (processingConfig: ProcessingConfig, tmpDir: string, axios:
 
   await log.info(`Depuis la dernière mise à jour, il y a eu ${tabFilter.length} modifications sur ${tabId.length} stations uniques dans le fichier`)
 
-  if (tabFilter.length <= 1) {
+  if (tabFilter.length === 0) {
     await log.info('Rien à faire')
     return
   }
